@@ -109,6 +109,14 @@ log.error(message)
 - EmailLogTarget
 - FileSystemLogTarget
 
+## Installing
+
+To install and generate the jar file please run the following command:
+
+```
+./mvnw clean install
+```
+
 ## Future Development
 
 - Field validation (eg. email and url)
