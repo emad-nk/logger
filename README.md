@@ -5,7 +5,7 @@
 Each log target has its own LogLevel. Log targets implement `LogTarget` interface, therefore it is easy to extend targets by creating new targets and implement the `LogTarget` interface.
 
 In order to avoid creating the same instance of a log target over and over `ConsoleLogTarget` is singleton. Other log targets use `LogTargetFactory` to create the instance.
-The reason that `LogTargetFactory` is used for other log targets is because there might be multiple APIs that need to be used to log the messages for example:
+The reason that `LogTargetFactory` is used for other log targets is because for example there might be multiple APIs that need to be used to log the messages for instance:
 ```
 APILogTarget.createOrGetInstance("api-1.com", logger)
 ```
@@ -19,8 +19,8 @@ In case the user decides to remove a log target from the logger the instance ass
 
 ### Concurrency
 
-Throughout the entire application those variables that can be accessed via multiple thread are thread safe.
-In this case `ConcurrentHashMap` is used which manages thread locks internally.
+Throughout the entire application those variables that can be accessed via multiple threads are thread safe.
+In this case `ConcurrentHashMap` is used which manages thread locks automatically.
 
 ### Complexity
 
@@ -38,7 +38,7 @@ Log targets should get added to the Logger via the `addLogTargets(logTargets: Ma
 
 If no log targets is added logging a message will throw a `RuntimeException` with message: `No log targets have been added`
 
-In order to add a target use the `createOrGetInstance()` method for these logs targets:
+In order to create a log target use the `createOrGetInstance()` method for these targets:
 
 ```kotlin
 APILogTarget.createOrGetInstance("example-api.com", logger)
@@ -48,7 +48,7 @@ EmailLogTarget.createOrGetInstance("example@example.com", logger)
 FileSystemLogTarget.createOrGetInstance("/file/location", logger)
 ```
 
-`ConsoleLogTarget` is singleton so it doesn't require `createInstance()` method.
+`ConsoleLogTarget` is already singleton so it doesn't require `createOrGetInstance()` method.
 
 Here is an example code to create a logger and register all the log targets:
 
