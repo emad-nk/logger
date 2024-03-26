@@ -2,11 +2,14 @@ package logger
 
 import com.game.logger.LogLevel.DEBUG
 import com.game.logger.LogLevel.ERROR
+import com.game.logger.LogLevel.INFO
+import com.game.logger.LogLevel.WARN
 import com.game.logger.Logger
 import com.game.logger.target.APILogTarget
 import com.game.logger.target.ConsoleLogTarget
 import com.game.logger.target.EmailLogTarget
 import com.game.logger.target.FileSystemLogTarget
+import com.game.logger.target.LogTargetFactory
 import java.io.ByteArrayOutputStream
 import java.io.PrintStream
 import org.assertj.core.api.Assertions.assertThat
@@ -20,15 +23,18 @@ class LoggerTest {
 
     private val standardOut = System.out
     private val outputStreamCaptor = ByteArrayOutputStream()
+    private lateinit var logger: Logger
 
     @BeforeEach
     fun setUp() {
         System.setOut(PrintStream(outputStreamCaptor))
+        logger = Logger(className = CLASS_NAME)
     }
 
     @AfterEach
     fun tearDown() {
         System.setOut(standardOut)
+        logger.deleteAllLogTargets()
     }
 
     @Nested
@@ -42,8 +48,9 @@ class LoggerTest {
 
             logger.info(message = logMessage)
 
-            assertThat(outputStreamCaptor.toString()).containsPattern(TIMESTAMP_PATTERN)
-            assertThat(outputStreamCaptor.toString()).contains("[Console] [INFO] $className: $logMessage\n")
+            val consoleOutput = outputStreamCaptor.toString()
+            assertThat(consoleOutput).containsPattern(TIMESTAMP_PATTERN)
+            assertThat(consoleOutput).contains("[Console] [INFO] $className: $logMessage\n")
         }
 
         @Test
@@ -56,8 +63,9 @@ class LoggerTest {
 
             logger.debug(message = logMessage, exception = RuntimeException(ERROR_MESSAGE))
 
-            assertThat(outputStreamCaptor.toString()).containsPattern(TIMESTAMP_PATTERN)
-            assertThat(outputStreamCaptor.toString()).contains(
+            val consoleOutput = outputStreamCaptor.toString()
+            assertThat(consoleOutput).containsPattern(TIMESTAMP_PATTERN)
+            assertThat(consoleOutput).contains(
                 "[Console] [$logLevel] $className: $logMessage\n",
                 ERROR_MESSAGE
             )
@@ -73,7 +81,7 @@ class LoggerTest {
                 )
             )
 
-            val logTargets = logger.getLogTargets()
+            val logTargets = logger.logTargetsMap
 
             assertThat(logTargets).hasSize(1)
             assertThat(logTargets.map { it.key }.first()).isEqualTo(ConsoleLogTarget)
@@ -103,8 +111,9 @@ class LoggerTest {
 
             logger.info(message = LOG_MESSAGE)
 
-            assertThat(outputStreamCaptor.toString()).containsPattern(TIMESTAMP_PATTERN)
-            assertThat(outputStreamCaptor.toString()).contains("[API example.com] [INFO] $CLASS_NAME: $LOG_MESSAGE\n")
+            val consoleOutput = outputStreamCaptor.toString()
+            assertThat(consoleOutput).containsPattern(TIMESTAMP_PATTERN)
+            assertThat(consoleOutput).contains("[API example.com] [INFO] $CLASS_NAME: $LOG_MESSAGE\n")
         }
 
         @Test
@@ -115,8 +124,9 @@ class LoggerTest {
 
             logger.debug(message = LOG_MESSAGE, exception = RuntimeException(ERROR_MESSAGE))
 
-            assertThat(outputStreamCaptor.toString()).containsPattern(TIMESTAMP_PATTERN)
-            assertThat(outputStreamCaptor.toString()).contains(
+            val consoleOutput = outputStreamCaptor.toString()
+            assertThat(consoleOutput).containsPattern(TIMESTAMP_PATTERN)
+            assertThat(consoleOutput).contains(
                 "[API example.com] [$logLevel] $CLASS_NAME: $LOG_MESSAGE\n",
                 ERROR_MESSAGE
             )
@@ -132,7 +142,7 @@ class LoggerTest {
                 )
             )
 
-            val logTargets = logger.getLogTargets()
+            val logTargets = logger.logTargetsMap
 
             assertThat(logTargets).hasSize(1)
             assertThat(logTargets.map { it.key }.first()).isEqualTo(APILogTarget.createInstance("example.com"))
@@ -161,8 +171,9 @@ class LoggerTest {
 
             logger.info(message = LOG_MESSAGE)
 
-            assertThat(outputStreamCaptor.toString()).containsPattern(TIMESTAMP_PATTERN)
-            assertThat(outputStreamCaptor.toString()).contains("[Email to $email] [INFO] $CLASS_NAME: $LOG_MESSAGE\n")
+            val consoleOutput = outputStreamCaptor.toString()
+            assertThat(consoleOutput).containsPattern(TIMESTAMP_PATTERN)
+            assertThat(consoleOutput).contains("[Email to $email] [INFO] $CLASS_NAME: $LOG_MESSAGE\n")
         }
 
         @Test
@@ -174,8 +185,9 @@ class LoggerTest {
 
             logger.debug(message = LOG_MESSAGE, exception = RuntimeException(ERROR_MESSAGE))
 
-            assertThat(outputStreamCaptor.toString()).containsPattern(TIMESTAMP_PATTERN)
-            assertThat(outputStreamCaptor.toString()).contains(
+            val consoleOutput = outputStreamCaptor.toString()
+            assertThat(consoleOutput).containsPattern(TIMESTAMP_PATTERN)
+            assertThat(consoleOutput).contains(
                 "[Email to $email] [$logLevel] $CLASS_NAME: $LOG_MESSAGE\n",
                 ERROR_MESSAGE
             )
@@ -192,7 +204,7 @@ class LoggerTest {
                 )
             )
 
-            val logTargets = logger.getLogTargets()
+            val logTargets = logger.logTargetsMap
 
             assertThat(logTargets).hasSize(1)
             assertThat(logTargets.map { it.key }.first()).isEqualTo(EmailLogTarget.createInstance(email))
@@ -223,8 +235,9 @@ class LoggerTest {
 
             logger.info(message = LOG_MESSAGE)
 
-            assertThat(outputStreamCaptor.toString()).containsPattern(TIMESTAMP_PATTERN)
-            assertThat(outputStreamCaptor.toString()).contains("[FileSystem location $location] [INFO] $CLASS_NAME: $LOG_MESSAGE\n")
+            val consoleOutput = outputStreamCaptor.toString()
+            assertThat(consoleOutput).containsPattern(TIMESTAMP_PATTERN)
+            assertThat(consoleOutput).contains("[FileSystem location $location] [INFO] $CLASS_NAME: $LOG_MESSAGE\n")
         }
 
         @Test
@@ -236,8 +249,9 @@ class LoggerTest {
 
             logger.debug(message = LOG_MESSAGE, exception = RuntimeException(ERROR_MESSAGE))
 
-            assertThat(outputStreamCaptor.toString()).containsPattern(TIMESTAMP_PATTERN)
-            assertThat(outputStreamCaptor.toString()).contains(
+            val consoleOutput = outputStreamCaptor.toString()
+            assertThat(consoleOutput).containsPattern(TIMESTAMP_PATTERN)
+            assertThat(consoleOutput).contains(
                 "[FileSystem location $location] [$logLevel] $CLASS_NAME: $LOG_MESSAGE\n",
                 ERROR_MESSAGE
             )
@@ -254,7 +268,7 @@ class LoggerTest {
                 )
             )
 
-            val logTargets = logger.getLogTargets()
+            val logTargets = logger.logTargetsMap
 
             assertThat(logTargets).hasSize(1)
             assertThat(logTargets.map { it.key }.first()).isEqualTo(FileSystemLogTarget.createInstance(location))
@@ -267,11 +281,64 @@ class LoggerTest {
             val logMessage = "This is a log message"
             val logLevel = ERROR
             val logger = Logger(className = className)
-            logger.addLogTargets(logTargets = mapOf(FileSystemLogTarget.createInstance("location") to logLevel))
+            logger.addLogTargets(logTargets = mapOf(FileSystemLogTarget.createInstance("/documents/logs") to logLevel))
 
             logger.warn(message = logMessage)
 
             assertThat(outputStreamCaptor.toString()).isEmpty()
+        }
+    }
+
+    @Nested
+    inner class MultipleLogTargetsTests {
+        @Test
+        fun `logs debug message on multiple targets`() {
+            val location = "/documents/logs"
+            val api = "api.com"
+            val email = "example@example.com"
+            val logger = Logger(className = CLASS_NAME)
+            logger.addLogTargets(
+                logTargets = mapOf(
+                    ConsoleLogTarget to INFO,
+                    APILogTarget.createInstance(api) to INFO,
+                    FileSystemLogTarget.createInstance(location) to INFO,
+                    EmailLogTarget.createInstance(email) to INFO
+                )
+            )
+
+            logger.info(message = LOG_MESSAGE)
+
+            val consoleOutput = outputStreamCaptor.toString()
+            assertThat(consoleOutput).containsPattern(TIMESTAMP_PATTERN)
+            assertThat(consoleOutput).contains("[Console] [INFO] $CLASS_NAME: $LOG_MESSAGE\n")
+            assertThat(consoleOutput).contains("[FileSystem location $location] [INFO] $CLASS_NAME: $LOG_MESSAGE\n")
+            assertThat(consoleOutput).contains("[API $api] [INFO] $CLASS_NAME: $LOG_MESSAGE\n")
+            assertThat(consoleOutput).contains("[Email to $email] [INFO] $CLASS_NAME: $LOG_MESSAGE\n")
+        }
+
+        @Test
+        fun `does not log to some of the targets that their log level is higher than the log message level`() {
+            val location = "/documents/logs"
+            val api = "api.com"
+            val email = "example@example.com"
+            val logger = Logger(className = CLASS_NAME)
+            logger.addLogTargets(
+                logTargets = mapOf(
+                    ConsoleLogTarget to INFO,
+                    APILogTarget.createInstance(api) to INFO,
+                    FileSystemLogTarget.createInstance(location) to ERROR,
+                    EmailLogTarget.createInstance(email) to WARN
+                )
+            )
+
+            logger.info(message = LOG_MESSAGE)
+
+            val consoleOutput = outputStreamCaptor.toString()
+            assertThat(consoleOutput).containsPattern(TIMESTAMP_PATTERN)
+            assertThat(consoleOutput).contains("[Console] [INFO] $CLASS_NAME: $LOG_MESSAGE\n")
+            assertThat(consoleOutput).contains("[API $api] [INFO] $CLASS_NAME: $LOG_MESSAGE\n")
+            assertThat(consoleOutput).doesNotContain("[FileSystem location $location] [INFO] $CLASS_NAME: $LOG_MESSAGE\n")
+            assertThat(consoleOutput).doesNotContain("[Email to $email] [INFO] $CLASS_NAME: $LOG_MESSAGE\n")
         }
     }
 
@@ -284,7 +351,37 @@ class LoggerTest {
             assertThrows<RuntimeException> { logger.info(message = LOG_MESSAGE) }
         }
 
+        @Test
+        fun `deletes log targets and their associated instances`() {
+            val location = "/documents/logs"
+            val api = "example.com"
+            val email = "example@example.com"
+            val logger = Logger(className = CLASS_NAME)
+            logger.addLogTargets(
+                logTargets = mapOf(
+                    ConsoleLogTarget to INFO,
+                    APILogTarget.createInstance(api) to INFO,
+                    FileSystemLogTarget.createInstance(location) to ERROR,
+                    EmailLogTarget.createInstance(email) to WARN
+                )
+            )
 
+            assertThat(LogTargetFactory.apiLogTargetsMap).hasSize(1)
+            assertThat(LogTargetFactory.fileSystemLogTargetsMap).hasSize(1)
+            assertThat(LogTargetFactory.emailLogTargetsMap).hasSize(1)
+
+            logger.deleteLogTargets(
+                APILogTarget.createInstance(api),
+                FileSystemLogTarget.createInstance(location),
+                EmailLogTarget.createInstance(email),
+                ConsoleLogTarget
+            )
+
+            assertThat(LogTargetFactory.apiLogTargetsMap).isEmpty()
+            assertThat(LogTargetFactory.fileSystemLogTargetsMap).isEmpty()
+            assertThat(LogTargetFactory.emailLogTargetsMap).isEmpty()
+            assertThat(logger.logTargetsMap).isEmpty()
+        }
     }
 
     companion object {

@@ -4,31 +4,59 @@ import com.game.logger.LogLevel.DEBUG
 import com.game.logger.LogLevel.ERROR
 import com.game.logger.LogLevel.INFO
 import com.game.logger.LogLevel.WARN
-import com.game.logger.target.ConsoleLogTarget
 import com.game.logger.target.LogTarget
+import com.game.logger.target.LogTargetFactoryManagement
+import java.util.concurrent.ConcurrentHashMap
 
 class Logger(
     private val className: String,
 ) {
 
-    private val logTargets: MutableMap<LogTarget, LogLevel> = mutableMapOf()
+    private val logTargets: ConcurrentHashMap<LogTarget, LogLevel> = ConcurrentHashMap()
+
+    /**
+     * Gets map of log targets with their log level
+     */
+    val logTargetsMap: Map<LogTarget, LogLevel>
+        get() = logTargets
 
     /**
      * Adds log targets
      * @param logTargets map
      */
-    fun addLogTargets(logTargets : Map<LogTarget, LogLevel>) {
+    fun addLogTargets(logTargets: Map<LogTarget, LogLevel>) {
         logTargets.forEach { (logTarget, logLevel) ->
             this.logTargets[logTarget] = logLevel
         }
     }
 
+
     /**
-     * Gets map of log targets with their log level
+     * Deletes log targets from the Logger and their associated instances in the LogTargetFactory
+     * @param logTargets vararg
      */
-    fun getLogTargets(): Map<LogTarget, LogLevel> {
-        return logTargets
+    fun deleteLogTargets(vararg logTargets: LogTarget) {
+        logTargets.forEach { logTarget ->
+            this.logTargets.remove(logTarget)?.let {
+                if (logTarget is LogTargetFactoryManagement) {
+                    logTarget.deleteLogTargetInstances()
+                }
+            }
+        }
     }
+
+    /**
+     * Deletes all log targets from the Logger and their associated instances in the LogTargetFactory
+     */
+    fun deleteAllLogTargets() {
+        logTargets.forEach { logTarget ->
+            if (logTarget is LogTargetFactoryManagement) {
+                logTarget.deleteLogTargetInstances()
+            }
+        }
+        logTargets.clear()
+    }
+
 
     /**
      * Logs messages with the log level
@@ -36,7 +64,7 @@ class Logger(
      * @param message
      */
     fun log(logLevel: LogLevel, message: String, exception: Throwable? = null) {
-        if(logTargets.isEmpty()) throw RuntimeException("No log targets have been added")
+        if (logTargets.isEmpty()) throw RuntimeException("No log targets have been added")
         val logMessage = "[$logLevel] $className: $message"
         if (exception != null) {
             logTargets.forEach { (logTarget, registeredLogLevel) ->
