@@ -113,3 +113,4 @@ log.error(message)
 
 - Field validation (eg. email and url)
 - Change Log targets to actually send logs to the respective targets
+- Better test coverage
