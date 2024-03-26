@@ -5,7 +5,7 @@ import logger.LogLevel.ERROR
 import logger.LogLevel.INFO
 import logger.LogLevel.WARN
 import logger.target.LogTarget
-import logger.target.LogTargetFactoryManagement
+import logger.target.LogTargetFactoryManager
 import java.util.concurrent.ConcurrentHashMap
 
 class Logger(
@@ -38,7 +38,7 @@ class Logger(
     fun deleteLogTargets(vararg logTargets: LogTarget) {
         logTargets.forEach { logTarget ->
             this.logTargets.remove(logTarget)?.let {
-                if (logTarget is LogTargetFactoryManagement) {
+                if (logTarget is LogTargetFactoryManager) {
                     logTarget.deleteLogTargetInstances()
                 }
             }
@@ -49,8 +49,8 @@ class Logger(
      * Deletes all log targets from the Logger and their associated instances in the LogTargetFactory
      */
     fun deleteAllLogTargets() {
-        logTargets.forEach { logTarget ->
-            if (logTarget is LogTargetFactoryManagement) {
+        logTargets.keys.forEach { logTarget ->
+            if (logTarget is LogTargetFactoryManager) {
                 logTarget.deleteLogTargetInstances()
             }
         }

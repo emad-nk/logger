@@ -40,32 +40,28 @@ class LoggerTest {
     inner class ConsoleLogTargetTests {
         @Test
         fun `logs debug message`() {
-            val className = "testClass"
-            val logMessage = "This is a log message"
-            val logger = Logger(className = className)
+            val logger = Logger(className = CLASS_NAME)
             logger.addLogTargets(logTargets = mapOf(ConsoleLogTarget to DEBUG))
 
-            logger.info(message = logMessage)
+            logger.info(message = LOG_MESSAGE)
 
             val consoleOutput = outputStreamCaptor.toString()
             assertThat(consoleOutput).containsPattern(TIMESTAMP_PATTERN)
-            assertThat(consoleOutput).contains("[Console] [INFO] $className: $logMessage\n")
+            assertThat(consoleOutput).contains("[Console] [INFO] $CLASS_NAME: $LOG_MESSAGE\n")
         }
 
         @Test
         fun `logs debug message with exception`() {
-            val className = "testClass"
-            val logMessage = "This is a log message"
             val logLevel = DEBUG
-            val logger = Logger(className = className)
+            val logger = Logger(className = CLASS_NAME)
             logger.addLogTargets(logTargets = mapOf(ConsoleLogTarget to logLevel))
 
-            logger.debug(message = logMessage, exception = RuntimeException(ERROR_MESSAGE))
+            logger.debug(message = LOG_MESSAGE, exception = RuntimeException(ERROR_MESSAGE))
 
             val consoleOutput = outputStreamCaptor.toString()
             assertThat(consoleOutput).containsPattern(TIMESTAMP_PATTERN)
             assertThat(consoleOutput).contains(
-                "[Console] [$logLevel] $className: $logMessage\n",
+                "[Console] [$logLevel] $CLASS_NAME: $LOG_MESSAGE\n",
                 ERROR_MESSAGE
             )
         }
@@ -89,13 +85,11 @@ class LoggerTest {
 
         @Test
         fun `does not log when log level is higher than the coming log message`() {
-            val className = "testClass"
-            val logMessage = "This is a log message"
             val logLevel = ERROR
-            val logger = Logger(className = className)
+            val logger = Logger(className = CLASS_NAME)
             logger.addLogTargets(logTargets = mapOf(ConsoleLogTarget to logLevel))
 
-            logger.warn(message = logMessage)
+            logger.warn(message = LOG_MESSAGE)
 
             assertThat(outputStreamCaptor.toString()).isEmpty()
         }
@@ -212,13 +206,11 @@ class LoggerTest {
 
         @Test
         fun `does not log when log level is higher than the coming log message`() {
-            val className = "testClass"
-            val logMessage = "This is a log message"
             val logLevel = ERROR
-            val logger = Logger(className = className)
+            val logger = Logger(className = CLASS_NAME)
             logger.addLogTargets(logTargets = mapOf(EmailLogTarget.createInstance("example@example.com") to logLevel))
 
-            logger.warn(message = logMessage)
+            logger.warn(message = LOG_MESSAGE)
 
             assertThat(outputStreamCaptor.toString()).isEmpty()
         }
@@ -376,6 +368,33 @@ class LoggerTest {
                 ConsoleLogTarget
             )
 
+            assertThat(LogTargetFactory.apiLogTargetsMap).isEmpty()
+            assertThat(LogTargetFactory.fileSystemLogTargetsMap).isEmpty()
+            assertThat(LogTargetFactory.emailLogTargetsMap).isEmpty()
+            assertThat(logger.logTargetsMap).isEmpty()
+        }
+
+        @Test
+        fun `deletes all log targets and their associated instances`() {
+            val location = "/documents/logs"
+            val api = "example.com"
+            val email = "example@example.com"
+            val logger = Logger(className = CLASS_NAME)
+            logger.addLogTargets(
+                logTargets = mapOf(
+                    ConsoleLogTarget to INFO,
+                    APILogTarget.createInstance(api) to INFO,
+                    FileSystemLogTarget.createInstance(location) to ERROR,
+                    EmailLogTarget.createInstance(email) to WARN
+                )
+            )
+
+            assertThat(LogTargetFactory.apiLogTargetsMap).hasSize(1)
+            assertThat(LogTargetFactory.fileSystemLogTargetsMap).hasSize(1)
+            assertThat(LogTargetFactory.emailLogTargetsMap).hasSize(1)
+
+            logger.deleteAllLogTargets()
+            
             assertThat(LogTargetFactory.apiLogTargetsMap).isEmpty()
             assertThat(LogTargetFactory.fileSystemLogTargetsMap).isEmpty()
             assertThat(LogTargetFactory.emailLogTargetsMap).isEmpty()

@@ -5,7 +5,7 @@ import java.time.Instant.now
 
 class FileSystemLogTarget internal constructor(
     private val fileSystemLocation: String,
-) : LogTarget, LogTargetFactoryManagement {
+) : LogTarget, LogTargetFactoryManager {
 
     override var logLevel = LogLevel.INFO
     override fun logMessage(message: String, logLevel: LogLevel) {

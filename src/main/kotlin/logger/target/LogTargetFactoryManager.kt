@@ -1,6 +1,6 @@
 package logger.target
 
-interface LogTargetFactoryManagement {
+interface LogTargetFactoryManager {
 
     fun deleteLogTargetInstances()
 }

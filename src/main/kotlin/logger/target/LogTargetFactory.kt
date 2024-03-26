@@ -2,6 +2,10 @@ package logger.target
 
 import java.util.concurrent.ConcurrentHashMap
 
+/**
+ * Prevents creating the same instance
+ * Usually the number of APIs, FileSystems and Emails to use for logging is not a lot and perhaps there is only 1 API, FileSystem and Email
+ */
 object LogTargetFactory {
 
     private val emailLogTargets: ConcurrentHashMap<String, EmailLogTarget> = ConcurrentHashMap()

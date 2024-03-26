@@ -6,7 +6,7 @@ import java.time.Instant.now
 
 class APILogTarget internal constructor(
     private val apiUrl: String,
-) : LogTarget, LogTargetFactoryManagement {
+) : LogTarget, LogTargetFactoryManager {
 
     override var logLevel = INFO
     override fun logMessage(message: String, logLevel: LogLevel) {
