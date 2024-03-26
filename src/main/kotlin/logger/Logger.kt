@@ -9,8 +9,26 @@ import com.game.logger.target.LogTarget
 
 class Logger(
     private val className: String,
-    private val logTargets: Map<LogTarget, LogLevel> = mapOf(ConsoleLogTarget() to INFO)
 ) {
+
+    private val logTargets: MutableMap<LogTarget, LogLevel> = mutableMapOf()
+
+    /**
+     * Adds log targets
+     * @param logTargets map
+     */
+    fun addLogTargets(logTargets : Map<LogTarget, LogLevel>) {
+        logTargets.forEach { (logTarget, logLevel) ->
+            this.logTargets[logTarget] = logLevel
+        }
+    }
+
+    /**
+     * Gets map of log targets with their log level
+     */
+    fun getLogTargets(): Map<LogTarget, LogLevel> {
+        return logTargets
+    }
 
     /**
      * Logs messages with the log level
@@ -18,6 +36,7 @@ class Logger(
      * @param message
      */
     fun log(logLevel: LogLevel, message: String, exception: Throwable? = null) {
+        if(logTargets.isEmpty()) throw RuntimeException("No log targets have been added")
         val logMessage = "[$logLevel] $className: $message"
         if (exception != null) {
             logTargets.forEach { (logTarget, registeredLogLevel) ->

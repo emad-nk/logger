@@ -4,7 +4,7 @@ import com.game.logger.LogLevel
 import com.game.logger.LogLevel.INFO
 import java.time.Instant.now
 
-class ConsoleLogTarget: LogTarget {
+object ConsoleLogTarget: LogTarget {
 
     override var logLevel = INFO
 
