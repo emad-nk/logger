@@ -2,7 +2,7 @@
 
 ## Implementation details
 
-Each log target has its own LogLevel. Log targets implement `LogTarget` interface, therefore it is easy to extend targets by creating new targets and implement the `LogTarget` interface.
+Logger supports multiple log targets and each log target has its own LogLevel. Log targets implement `LogTarget` interface, therefore it is easy to extend targets by creating new targets and implement the `LogTarget` interface.
 
 In order to avoid creating the same instance of a log target over and over `ConsoleLogTarget` is singleton. Other log targets use `LogTargetFactory` to create the instance.
 The reason that `LogTargetFactory` is used for other log targets is because for example there might be multiple APIs that need to be used to log the messages for instance:
