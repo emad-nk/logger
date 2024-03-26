@@ -1,4 +1,4 @@
-package com.game.logger
+package logger
 
 enum class LogLevel {
     DEBUG,

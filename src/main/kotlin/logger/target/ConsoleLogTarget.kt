@@ -1,15 +1,15 @@
-package com.game.logger.target
+package logger.target
 
-import com.game.logger.LogLevel
-import com.game.logger.LogLevel.INFO
+import logger.LogLevel
+import logger.LogLevel.INFO
 import java.time.Instant.now
 
-object ConsoleLogTarget: LogTarget {
+object ConsoleLogTarget : LogTarget {
 
     override var logLevel = INFO
 
     override fun logMessage(message: String, logLevel: LogLevel) {
-        if(logLevel >= this.logLevel) {
+        if (logLevel >= ConsoleLogTarget.logLevel) {
             println("[${now()}] [Console] $message")
         }
     }

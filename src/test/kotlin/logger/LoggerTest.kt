@@ -1,15 +1,14 @@
 package logger
 
-import com.game.logger.LogLevel.DEBUG
-import com.game.logger.LogLevel.ERROR
-import com.game.logger.LogLevel.INFO
-import com.game.logger.LogLevel.WARN
-import com.game.logger.Logger
-import com.game.logger.target.APILogTarget
-import com.game.logger.target.ConsoleLogTarget
-import com.game.logger.target.EmailLogTarget
-import com.game.logger.target.FileSystemLogTarget
-import com.game.logger.target.LogTargetFactory
+import logger.LogLevel.DEBUG
+import logger.LogLevel.ERROR
+import logger.LogLevel.INFO
+import logger.LogLevel.WARN
+import logger.target.APILogTarget
+import logger.target.ConsoleLogTarget
+import logger.target.EmailLogTarget
+import logger.target.FileSystemLogTarget
+import logger.target.LogTargetFactory
 import java.io.ByteArrayOutputStream
 import java.io.PrintStream
 import org.assertj.core.api.Assertions.assertThat

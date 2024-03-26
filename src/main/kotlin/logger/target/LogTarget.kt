@@ -1,6 +1,6 @@
-package com.game.logger.target
+package logger.target
 
-import com.game.logger.LogLevel
+import logger.LogLevel
 
 interface LogTarget {
 

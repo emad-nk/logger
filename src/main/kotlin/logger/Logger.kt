@@ -1,11 +1,11 @@
-package com.game.logger
+package logger
 
-import com.game.logger.LogLevel.DEBUG
-import com.game.logger.LogLevel.ERROR
-import com.game.logger.LogLevel.INFO
-import com.game.logger.LogLevel.WARN
-import com.game.logger.target.LogTarget
-import com.game.logger.target.LogTargetFactoryManagement
+import logger.LogLevel.DEBUG
+import logger.LogLevel.ERROR
+import logger.LogLevel.INFO
+import logger.LogLevel.WARN
+import logger.target.LogTarget
+import logger.target.LogTargetFactoryManagement
 import java.util.concurrent.ConcurrentHashMap
 
 class Logger(

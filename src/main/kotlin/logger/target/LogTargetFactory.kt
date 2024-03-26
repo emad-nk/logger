@@ -1,14 +1,14 @@
-package com.game.logger.target
+package logger.target
 
 import java.util.concurrent.ConcurrentHashMap
 
 object LogTargetFactory {
 
-    private val emailLogTargets : ConcurrentHashMap<String, EmailLogTarget> = ConcurrentHashMap()
-    private val fileSystemLogTargets : ConcurrentHashMap<String, FileSystemLogTarget> = ConcurrentHashMap()
-    private val apiLogTargets : ConcurrentHashMap<String, APILogTarget> = ConcurrentHashMap()
+    private val emailLogTargets: ConcurrentHashMap<String, EmailLogTarget> = ConcurrentHashMap()
+    private val fileSystemLogTargets: ConcurrentHashMap<String, FileSystemLogTarget> = ConcurrentHashMap()
+    private val apiLogTargets: ConcurrentHashMap<String, APILogTarget> = ConcurrentHashMap()
 
-    internal val emailLogTargetsMap : Map<String, EmailLogTarget>
+    internal val emailLogTargetsMap: Map<String, EmailLogTarget>
         get() = emailLogTargets
 
     internal val fileSystemLogTargetsMap: Map<String, FileSystemLogTarget>

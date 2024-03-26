@@ -1,4 +1,4 @@
-package com.game.logger.target
+package logger.target
 
 interface LogTargetFactoryManagement {
 
