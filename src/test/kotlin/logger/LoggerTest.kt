@@ -8,7 +8,6 @@ import logger.target.APILogTarget
 import logger.target.ConsoleLogTarget
 import logger.target.EmailLogTarget
 import logger.target.FileSystemLogTarget
-import logger.target.LogTargetFactory
 import java.io.ByteArrayOutputStream
 import java.io.PrintStream
 import org.assertj.core.api.Assertions.assertThat
@@ -22,18 +21,16 @@ class LoggerTest {
 
     private val standardOut = System.out
     private val outputStreamCaptor = ByteArrayOutputStream()
-    private lateinit var logger: Logger
+
 
     @BeforeEach
     fun setUp() {
         System.setOut(PrintStream(outputStreamCaptor))
-        logger = Logger(className = CLASS_NAME)
     }
 
     @AfterEach
     fun tearDown() {
         System.setOut(standardOut)
-        logger.deleteAllLogTargets()
     }
 
     @Nested
@@ -62,7 +59,7 @@ class LoggerTest {
             assertThat(consoleOutput).containsPattern(TIMESTAMP_PATTERN)
             assertThat(consoleOutput).contains(
                 "[Console] [$logLevel] $CLASS_NAME: $LOG_MESSAGE\n",
-                ERROR_MESSAGE
+                ERROR_MESSAGE,
             )
         }
 
@@ -72,8 +69,8 @@ class LoggerTest {
             logger.addLogTargets(
                 logTargets = mapOf(
                     ConsoleLogTarget to DEBUG,
-                    ConsoleLogTarget to ERROR
-                )
+                    ConsoleLogTarget to ERROR,
+                ),
             )
 
             val logTargets = logger.logTargetsMap
@@ -100,20 +97,20 @@ class LoggerTest {
         @Test
         fun `logs debug message`() {
             val logger = Logger(className = CLASS_NAME)
-            logger.addLogTargets(logTargets = mapOf(APILogTarget.createInstance("example.com") to DEBUG))
+            logger.addLogTargets(logTargets = mapOf(APILogTarget.createOrGetInstance("example.com", logger) to ERROR))
 
-            logger.info(message = LOG_MESSAGE)
+            logger.error(message = LOG_MESSAGE)
 
             val consoleOutput = outputStreamCaptor.toString()
             assertThat(consoleOutput).containsPattern(TIMESTAMP_PATTERN)
-            assertThat(consoleOutput).contains("[API example.com] [INFO] $CLASS_NAME: $LOG_MESSAGE\n")
+            assertThat(consoleOutput).contains("[API example.com] [ERROR] $CLASS_NAME: $LOG_MESSAGE\n")
         }
 
         @Test
         fun `logs debug message with exception`() {
             val logLevel = DEBUG
             val logger = Logger(className = CLASS_NAME)
-            logger.addLogTargets(logTargets = mapOf(APILogTarget.createInstance("example.com") to logLevel))
+            logger.addLogTargets(logTargets = mapOf(APILogTarget.createOrGetInstance("example.com", logger) to logLevel))
 
             logger.debug(message = LOG_MESSAGE, exception = RuntimeException(ERROR_MESSAGE))
 
@@ -121,7 +118,7 @@ class LoggerTest {
             assertThat(consoleOutput).containsPattern(TIMESTAMP_PATTERN)
             assertThat(consoleOutput).contains(
                 "[API example.com] [$logLevel] $CLASS_NAME: $LOG_MESSAGE\n",
-                ERROR_MESSAGE
+                ERROR_MESSAGE,
             )
         }
 
@@ -130,15 +127,15 @@ class LoggerTest {
             val logger = Logger(className = CLASS_NAME)
             logger.addLogTargets(
                 logTargets = mapOf(
-                    APILogTarget.createInstance("example.com") to DEBUG,
-                    APILogTarget.createInstance("example.com") to ERROR
-                )
+                    APILogTarget.createOrGetInstance("example.com", logger) to DEBUG,
+                    APILogTarget.createOrGetInstance("example.com", logger) to ERROR,
+                ),
             )
 
             val logTargets = logger.logTargetsMap
 
             assertThat(logTargets).hasSize(1)
-            assertThat(logTargets.map { it.key }.first()).isEqualTo(APILogTarget.createInstance("example.com"))
+            assertThat(logTargets.map { it.key }.first()).isEqualTo(APILogTarget.createOrGetInstance("example.com", logger))
             assertThat(logTargets.map { it.value }.first()).isEqualTo(ERROR)
         }
 
@@ -146,7 +143,7 @@ class LoggerTest {
         fun `does not log when log level is higher than the coming log message`() {
             val logLevel = ERROR
             val logger = Logger(className = CLASS_NAME)
-            logger.addLogTargets(logTargets = mapOf(APILogTarget.createInstance("example.com") to logLevel))
+            logger.addLogTargets(logTargets = mapOf(APILogTarget.createOrGetInstance("example.com", logger) to logLevel))
 
             logger.warn(message = LOG_MESSAGE)
 
@@ -160,7 +157,7 @@ class LoggerTest {
         fun `logs debug message`() {
             val email = "example@example.com"
             val logger = Logger(className = CLASS_NAME)
-            logger.addLogTargets(logTargets = mapOf(EmailLogTarget.createInstance("example@example.com") to DEBUG))
+            logger.addLogTargets(logTargets = mapOf(EmailLogTarget.createOrGetInstance("example@example.com", logger) to DEBUG))
 
             logger.info(message = LOG_MESSAGE)
 
@@ -174,7 +171,7 @@ class LoggerTest {
             val email = "example@example.com"
             val logLevel = DEBUG
             val logger = Logger(className = CLASS_NAME)
-            logger.addLogTargets(logTargets = mapOf(EmailLogTarget.createInstance(email) to logLevel))
+            logger.addLogTargets(logTargets = mapOf(EmailLogTarget.createOrGetInstance(email, logger) to logLevel))
 
             logger.debug(message = LOG_MESSAGE, exception = RuntimeException(ERROR_MESSAGE))
 
@@ -182,7 +179,7 @@ class LoggerTest {
             assertThat(consoleOutput).containsPattern(TIMESTAMP_PATTERN)
             assertThat(consoleOutput).contains(
                 "[Email to $email] [$logLevel] $CLASS_NAME: $LOG_MESSAGE\n",
-                ERROR_MESSAGE
+                ERROR_MESSAGE,
             )
         }
 
@@ -192,15 +189,15 @@ class LoggerTest {
             val logger = Logger(className = CLASS_NAME)
             logger.addLogTargets(
                 logTargets = mapOf(
-                    EmailLogTarget.createInstance(email) to DEBUG,
-                    EmailLogTarget.createInstance(email) to ERROR
-                )
+                    EmailLogTarget.createOrGetInstance(email, logger) to DEBUG,
+                    EmailLogTarget.createOrGetInstance(email, logger) to ERROR,
+                ),
             )
 
             val logTargets = logger.logTargetsMap
 
             assertThat(logTargets).hasSize(1)
-            assertThat(logTargets.map { it.key }.first()).isEqualTo(EmailLogTarget.createInstance(email))
+            assertThat(logTargets.map { it.key }.first()).isEqualTo(EmailLogTarget.createOrGetInstance(email, logger))
             assertThat(logTargets.map { it.value }.first()).isEqualTo(ERROR)
         }
 
@@ -208,7 +205,7 @@ class LoggerTest {
         fun `does not log when log level is higher than the coming log message`() {
             val logLevel = ERROR
             val logger = Logger(className = CLASS_NAME)
-            logger.addLogTargets(logTargets = mapOf(EmailLogTarget.createInstance("example@example.com") to logLevel))
+            logger.addLogTargets(logTargets = mapOf(EmailLogTarget.createOrGetInstance("example@example.com", logger) to logLevel))
 
             logger.warn(message = LOG_MESSAGE)
 
@@ -222,7 +219,7 @@ class LoggerTest {
         fun `logs debug message`() {
             val location = "/documents/logs"
             val logger = Logger(className = CLASS_NAME)
-            logger.addLogTargets(logTargets = mapOf(FileSystemLogTarget.createInstance(location) to DEBUG))
+            logger.addLogTargets(logTargets = mapOf(FileSystemLogTarget.createOrGetInstance(location, logger) to DEBUG))
 
             logger.info(message = LOG_MESSAGE)
 
@@ -236,7 +233,7 @@ class LoggerTest {
             val location = "/documents/logs"
             val logLevel = DEBUG
             val logger = Logger(className = CLASS_NAME)
-            logger.addLogTargets(logTargets = mapOf(FileSystemLogTarget.createInstance(location) to logLevel))
+            logger.addLogTargets(logTargets = mapOf(FileSystemLogTarget.createOrGetInstance(location, logger) to logLevel))
 
             logger.debug(message = LOG_MESSAGE, exception = RuntimeException(ERROR_MESSAGE))
 
@@ -244,7 +241,7 @@ class LoggerTest {
             assertThat(consoleOutput).containsPattern(TIMESTAMP_PATTERN)
             assertThat(consoleOutput).contains(
                 "[FileSystem location $location] [$logLevel] $CLASS_NAME: $LOG_MESSAGE\n",
-                ERROR_MESSAGE
+                ERROR_MESSAGE,
             )
         }
 
@@ -254,15 +251,15 @@ class LoggerTest {
             val logger = Logger(className = CLASS_NAME)
             logger.addLogTargets(
                 logTargets = mapOf(
-                    FileSystemLogTarget.createInstance(location) to DEBUG,
-                    FileSystemLogTarget.createInstance(location) to ERROR
-                )
+                    FileSystemLogTarget.createOrGetInstance(location, logger) to DEBUG,
+                    FileSystemLogTarget.createOrGetInstance(location, logger) to ERROR,
+                ),
             )
 
             val logTargets = logger.logTargetsMap
 
             assertThat(logTargets).hasSize(1)
-            assertThat(logTargets.map { it.key }.first()).isEqualTo(FileSystemLogTarget.createInstance(location))
+            assertThat(logTargets.map { it.key }.first()).isEqualTo(FileSystemLogTarget.createOrGetInstance(location, logger))
             assertThat(logTargets.map { it.value }.first()).isEqualTo(ERROR)
         }
 
@@ -272,7 +269,7 @@ class LoggerTest {
             val logMessage = "This is a log message"
             val logLevel = ERROR
             val logger = Logger(className = className)
-            logger.addLogTargets(logTargets = mapOf(FileSystemLogTarget.createInstance("/documents/logs") to logLevel))
+            logger.addLogTargets(logTargets = mapOf(FileSystemLogTarget.createOrGetInstance("/documents/logs", logger) to logLevel))
 
             logger.warn(message = logMessage)
 
@@ -291,10 +288,10 @@ class LoggerTest {
             logger.addLogTargets(
                 logTargets = mapOf(
                     ConsoleLogTarget to INFO,
-                    APILogTarget.createInstance(api) to INFO,
-                    FileSystemLogTarget.createInstance(location) to INFO,
-                    EmailLogTarget.createInstance(email) to INFO
-                )
+                    APILogTarget.createOrGetInstance(api, logger) to INFO,
+                    FileSystemLogTarget.createOrGetInstance(location, logger) to INFO,
+                    EmailLogTarget.createOrGetInstance(email, logger) to INFO,
+                ),
             )
 
             logger.info(message = LOG_MESSAGE)
@@ -311,15 +308,15 @@ class LoggerTest {
         fun `does not log to some of the targets that their log level is higher than the log message level`() {
             val location = "/documents/logs"
             val api = "api.com"
-            val email = "example@example.com"
+            val email = "new-example@example.com"
             val logger = Logger(className = CLASS_NAME)
             logger.addLogTargets(
                 logTargets = mapOf(
                     ConsoleLogTarget to INFO,
-                    APILogTarget.createInstance(api) to INFO,
-                    FileSystemLogTarget.createInstance(location) to ERROR,
-                    EmailLogTarget.createInstance(email) to WARN
-                )
+                    APILogTarget.createOrGetInstance(api, logger) to INFO,
+                    FileSystemLogTarget.createOrGetInstance(location, logger) to ERROR,
+                    EmailLogTarget.createOrGetInstance(email, logger) to WARN,
+                ),
             )
 
             logger.info(message = LOG_MESSAGE)
@@ -351,27 +348,59 @@ class LoggerTest {
             logger.addLogTargets(
                 logTargets = mapOf(
                     ConsoleLogTarget to INFO,
-                    APILogTarget.createInstance(api) to INFO,
-                    FileSystemLogTarget.createInstance(location) to ERROR,
-                    EmailLogTarget.createInstance(email) to WARN
-                )
+                    APILogTarget.createOrGetInstance(api, logger) to INFO,
+                    FileSystemLogTarget.createOrGetInstance(location, logger) to ERROR,
+                    EmailLogTarget.createOrGetInstance(email, logger) to WARN,
+                ),
             )
 
-            assertThat(LogTargetFactory.apiLogTargetsMap).hasSize(1)
-            assertThat(LogTargetFactory.fileSystemLogTargetsMap).hasSize(1)
-            assertThat(LogTargetFactory.emailLogTargetsMap).hasSize(1)
+            assertThat(logger.logTargetFactoryInstance.apiLogTargetsMap).hasSize(1)
+            assertThat(logger.logTargetFactoryInstance.fileSystemLogTargetsMap).hasSize(1)
+            assertThat(logger.logTargetFactoryInstance.emailLogTargetsMap).hasSize(1)
 
             logger.deleteLogTargets(
-                APILogTarget.createInstance(api),
-                FileSystemLogTarget.createInstance(location),
-                EmailLogTarget.createInstance(email),
-                ConsoleLogTarget
+                APILogTarget.createOrGetInstance(api, logger),
+                FileSystemLogTarget.createOrGetInstance(location, logger),
+                EmailLogTarget.createOrGetInstance(email, logger),
+                ConsoleLogTarget,
             )
 
-            assertThat(LogTargetFactory.apiLogTargetsMap).isEmpty()
-            assertThat(LogTargetFactory.fileSystemLogTargetsMap).isEmpty()
-            assertThat(LogTargetFactory.emailLogTargetsMap).isEmpty()
+            assertThat(logger.logTargetFactoryInstance.apiLogTargetsMap).isEmpty()
+            assertThat(logger.logTargetFactoryInstance.fileSystemLogTargetsMap).isEmpty()
+            assertThat(logger.logTargetFactoryInstance.emailLogTargetsMap).isEmpty()
             assertThat(logger.logTargetsMap).isEmpty()
+        }
+
+        @Test
+        fun `different logger instances have their own logTargetFactory, so other users cannot delete other users log target`() {
+            val location = "/documents/logs"
+            val api1 = "example.com"
+            val api2 = "example2.com"
+            val email = "example@example.com"
+            val logger1 = Logger(className = CLASS_NAME)
+            val logger2 = Logger(className = "Something-Else")
+            logger1.addLogTargets(
+                logTargets = mapOf(
+                    ConsoleLogTarget to INFO,
+                    APILogTarget.createOrGetInstance(api1, logger1) to INFO,
+                    APILogTarget.createOrGetInstance(api2, logger1) to ERROR,
+                    FileSystemLogTarget.createOrGetInstance(location, logger1) to ERROR,
+                    EmailLogTarget.createOrGetInstance(email, logger1) to WARN,
+                ),
+            )
+            logger2.addLogTargets(
+                logTargets = mapOf(
+                    APILogTarget.createOrGetInstance(api1, logger2) to WARN,
+                ),
+            )
+
+            assertThat(logger1.logTargetFactoryInstance.apiLogTargetsMap).hasSize(2)
+            assertThat(logger1.logTargetFactoryInstance.fileSystemLogTargetsMap).hasSize(1)
+            assertThat(logger1.logTargetFactoryInstance.emailLogTargetsMap).hasSize(1)
+
+            assertThat(logger2.logTargetFactoryInstance.apiLogTargetsMap).hasSize(1)
+            assertThat(logger2.logTargetFactoryInstance.fileSystemLogTargetsMap).isEmpty()
+            assertThat(logger2.logTargetFactoryInstance.emailLogTargetsMap).isEmpty()
         }
 
         @Test
@@ -383,27 +412,27 @@ class LoggerTest {
             logger.addLogTargets(
                 logTargets = mapOf(
                     ConsoleLogTarget to INFO,
-                    APILogTarget.createInstance(api) to INFO,
-                    FileSystemLogTarget.createInstance(location) to ERROR,
-                    EmailLogTarget.createInstance(email) to WARN
-                )
+                    APILogTarget.createOrGetInstance(api, logger) to INFO,
+                    FileSystemLogTarget.createOrGetInstance(location, logger) to ERROR,
+                    EmailLogTarget.createOrGetInstance(email, logger) to WARN,
+                ),
             )
 
-            assertThat(LogTargetFactory.apiLogTargetsMap).hasSize(1)
-            assertThat(LogTargetFactory.fileSystemLogTargetsMap).hasSize(1)
-            assertThat(LogTargetFactory.emailLogTargetsMap).hasSize(1)
+            assertThat(logger.logTargetFactoryInstance.apiLogTargetsMap).hasSize(1)
+            assertThat(logger.logTargetFactoryInstance.fileSystemLogTargetsMap).hasSize(1)
+            assertThat(logger.logTargetFactoryInstance.emailLogTargetsMap).hasSize(1)
 
             logger.deleteAllLogTargets()
-            
-            assertThat(LogTargetFactory.apiLogTargetsMap).isEmpty()
-            assertThat(LogTargetFactory.fileSystemLogTargetsMap).isEmpty()
-            assertThat(LogTargetFactory.emailLogTargetsMap).isEmpty()
+
+            assertThat(logger.logTargetFactoryInstance.apiLogTargetsMap).isEmpty()
+            assertThat(logger.logTargetFactoryInstance.fileSystemLogTargetsMap).isEmpty()
+            assertThat(logger.logTargetFactoryInstance.emailLogTargetsMap).isEmpty()
             assertThat(logger.logTargetsMap).isEmpty()
         }
     }
 
     companion object {
-        private const val TIMESTAMP_PATTERN = "\\[\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{6}Z\\]"
+        private const val TIMESTAMP_PATTERN = "\\[\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{6}Z]"
         private const val CLASS_NAME = "testClass"
         private const val LOG_MESSAGE = "This is a log message"
         private const val ERROR_MESSAGE = "Something went wrong"

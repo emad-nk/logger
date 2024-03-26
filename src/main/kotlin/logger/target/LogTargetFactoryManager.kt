@@ -1,6 +1,7 @@
 package logger.target
 
-interface LogTargetFactoryManager {
+import logger.Logger
 
-    fun deleteLogTargetInstances()
+interface LogTargetFactoryManager {
+    fun deleteLogTargetInstance(logger: Logger)
 }

@@ -6,7 +6,7 @@ import java.util.concurrent.ConcurrentHashMap
  * Prevents creating the same instance
  * Usually the number of APIs, FileSystems and Emails to use for logging is not a lot and perhaps there is only 1 API, FileSystem and Email
  */
-object LogTargetFactory {
+class LogTargetFactory{
 
     private val emailLogTargets: ConcurrentHashMap<String, EmailLogTarget> = ConcurrentHashMap()
     private val fileSystemLogTargets: ConcurrentHashMap<String, FileSystemLogTarget> = ConcurrentHashMap()
@@ -34,15 +34,15 @@ object LogTargetFactory {
         return apiLogTargets.getOrPut(apiUrl) { APILogTarget(apiUrl) }
     }
 
-    fun deleteEmailLogTargets() {
-        emailLogTargets.clear()
+    fun deleteEmailLogTargets(emailAddress: String) {
+        emailLogTargets.remove(emailAddress)
     }
 
-    fun deleteFileSystemLogTargets() {
-        fileSystemLogTargets.clear()
+    fun deleteFileSystemLogTargets(fileLocation: String) {
+        fileSystemLogTargets.remove(fileLocation)
     }
 
-    fun deleteApiLogTargets() {
-        apiLogTargets.clear()
+    fun deleteApiLogTargets(apiUrl: String) {
+        apiLogTargets.remove(apiUrl)
     }
 }

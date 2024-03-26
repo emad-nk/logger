@@ -1,24 +1,31 @@
 package logger
 
+import java.util.concurrent.ConcurrentHashMap
 import logger.LogLevel.DEBUG
 import logger.LogLevel.ERROR
 import logger.LogLevel.INFO
 import logger.LogLevel.WARN
 import logger.target.LogTarget
+import logger.target.LogTargetFactory
 import logger.target.LogTargetFactoryManager
-import java.util.concurrent.ConcurrentHashMap
 
 class Logger(
     private val className: String,
 ) {
 
     private val logTargets: ConcurrentHashMap<LogTarget, LogLevel> = ConcurrentHashMap()
+    private val logTargetFactory: LogTargetFactory by lazy {
+        LogTargetFactory()
+    }
 
     /**
      * Gets map of log targets with their log level
      */
     val logTargetsMap: Map<LogTarget, LogLevel>
         get() = logTargets
+
+    val logTargetFactoryInstance: LogTargetFactory
+        get() = logTargetFactory
 
     /**
      * Adds log targets
@@ -39,7 +46,7 @@ class Logger(
         logTargets.forEach { logTarget ->
             this.logTargets.remove(logTarget)?.let {
                 if (logTarget is LogTargetFactoryManager) {
-                    logTarget.deleteLogTargetInstances()
+                    logTarget.deleteLogTargetInstance(this)
                 }
             }
         }
@@ -51,7 +58,7 @@ class Logger(
     fun deleteAllLogTargets() {
         logTargets.keys.forEach { logTarget ->
             if (logTarget is LogTargetFactoryManager) {
-                logTarget.deleteLogTargetInstances()
+                logTarget.deleteLogTargetInstance(this)
             }
         }
         logTargets.clear()
